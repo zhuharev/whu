@@ -1,8 +1,11 @@
 package delivery
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/bloom42/rz-go/v2"
 	"github.com/bloom42/rz-go/v2/log"
@@ -21,13 +24,37 @@ type srv struct {
 	repo update.Repo
 }
 
-func (s *srv) handleWH(ctx echo.Context) error {
+func dedupeValues(val url.Values) map[string]string {
+	res := make(map[string]string)
+	for key, vals := range val {
+		if len(vals) == 1 {
+			res[key] = vals[0]
+		} else {
+			log.Error("error dedupe url values", rz.String("key", key), rz.String("value", strings.Join(vals, "|")))
+		}
+	}
+	return res
+}
+
+func (s *srv) handleWH(ctx echo.Context) (err error) {
 	//TODO: check wh is exists
+	var data []byte
 	defer ctx.Request().Body.Close()
-	data, err := ioutil.ReadAll(ctx.Request().Body)
+	if ct := ctx.Request().Header.Get("Content-Type"); strings.HasPrefix(ct, "application/x-www-form-urlencoded") {
+		values, err := ctx.FormParams()
+		if err != nil {
+			log.Error("error get form params", rz.Error("err", err))
+			return err
+		}
+		data, err = json.Marshal(dedupeValues(values))
+	} else {
+		data, err = ioutil.ReadAll(ctx.Request().Body)
+	}
 	if err != nil {
+		log.Error("error create body", rz.Error("err", err))
 		return err
 	}
+
 	return s.repo.Save(ctx.Param("xid"), data)
 }
 
