@@ -9,19 +9,23 @@ import (
 
 	"github.com/bloom42/rz-go/v2"
 	"github.com/bloom42/rz-go/v2/log"
+	"github.com/rs/xid"
 
 	"github.com/labstack/echo"
 	"github.com/zhuharev/whu/domain/update"
+	"github.com/zhuharev/whu/domain/webhook"
 )
 
-func New(e *echo.Echo, repo update.Repo) {
-	s := &srv{repo}
-	e.GET("/:xid/updates", s.handleUpdates)
-	e.POST("/:xid", s.handleWH)
+func New(e *echo.Echo, updUC update.UseCase, whRepo webhook.Repo) {
+	s := &srv{updUC, whRepo}
+	e.GET("/webhooks/:xid/updates", s.handleUpdates)
+	e.POST("/webhooks/:xid", s.handleWH)
+	e.POST("/create", s.handleWHCreate)
 }
 
 type srv struct {
-	repo update.Repo
+	repo   update.UseCase
+	whRepo webhook.Repo
 }
 
 func dedupeValues(val url.Values) map[string]string {
@@ -71,4 +75,13 @@ func (s *srv) handleUpdates(ctx echo.Context) error {
 		return ctx.JSON(200, []update.Update{})
 	}
 	return ctx.JSON(200, updates)
+}
+
+func (s *srv) handleWHCreate(ctx echo.Context) error {
+	id := xid.New()
+	err := s.whRepo.Create(id.String())
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(200, id.String())
 }
