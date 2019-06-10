@@ -3,6 +3,7 @@ package update
 import (
 	"encoding/json"
 
+	"github.com/pkg/errors"
 	whPkg "github.com/zhuharev/whu/domain/webhook"
 )
 
@@ -39,12 +40,12 @@ func (uc *uc) Save(id string, payload []byte) error {
 func (uc *uc) Get(id string, offset int) ([]Update, error) {
 	wh, err := uc.whRepo.Get(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get repo by id")
 	}
 
 	count, err := uc.repo.GetUpdatesCount(id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get updates count")
 	}
 
 	if offset > count {
@@ -55,9 +56,17 @@ func (uc *uc) Get(id string, offset int) ([]Update, error) {
 		wh.LastOffset = offset
 		err = uc.whRepo.UpdateLastOffset(id, offset)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "update last offset")
 		}
 	}
 
-	return uc.repo.Get(id, wh.LastOffset)
+	updates, err := uc.repo.Get(id, wh.LastOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range updates {
+		updates[i].ID = wh.LastOffset + i + 1
+	}
+	return updates, nil
 }

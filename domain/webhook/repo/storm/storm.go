@@ -16,7 +16,7 @@ func New(db *storm.DB) webhook.Repo {
 }
 
 func (r *repo) UpdateLastOffset(id string, offset int) error {
-	return r.db.UpdateField(&webhook.Webhook{}, "LastOffset", offset)
+	return r.db.UpdateField(&webhook.Webhook{ID: id}, "LastOffset", offset)
 }
 
 func (r *repo) Create(id string) error {
