@@ -1,5 +1,7 @@
 github.com/asdine/storm v2.1.2+incompatible h1:dczuIkyqwY2LrtXPz8ixMrU/OFgZp71kbKTHGrXYt/Q=
 github.com/asdine/storm v2.1.2+incompatible/go.mod h1:RarYDc9hq1UPLImuiXK3BIWPJLdIygvV3PsInK0FbVQ=
+github.com/bloom42/rz-go v1.2.4 h1:VUqpULJ0oC6T3qMiwX1I2hY/jtf4r3ZYmIizCSvuGRQ=
+github.com/bloom42/rz-go v1.2.4/go.mod h1:+8rkF5N/tFDYDPRDH2YV3aPKdeeVHUNV0CLxdJmM0EQ=
 github.com/bloom42/rz-go/v2 v2.6.0 h1:lBVnUp+rnyKC6+YuW0GkbILwn8crRjEAc586Au4gNWs=
 github.com/bloom42/rz-go/v2 v2.6.0/go.mod h1:6+Jf0CiW6O0p6s3x5hmH6ruFlXj8XCPLftwzjY9S2v0=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=

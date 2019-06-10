@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/asdine/storm v2.1.2+incompatible
+	github.com/bloom42/rz-go v1.2.4
 	github.com/bloom42/rz-go/v2 v2.6.0
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.2.9 // indirect
