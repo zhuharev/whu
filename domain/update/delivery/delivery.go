@@ -41,6 +41,7 @@ func dedupeValues(val url.Values) map[string]string {
 }
 
 func (s *srv) handleWH(ctx echo.Context) (err error) {
+	log.Debug("incoming webhook", rz.String("url", ctx.Request().URL.String()))
 	//TODO: check wh is exists
 	var data []byte
 	defer ctx.Request().Body.Close()

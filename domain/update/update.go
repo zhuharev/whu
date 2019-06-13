@@ -54,7 +54,7 @@ func (uc *uc) Get(id string, offset int) ([]Update, error) {
 
 	if wh.LastOffset < offset {
 		wh.LastOffset = offset
-		err = uc.whRepo.UpdateLastOffset(id, offset+1)
+		err = uc.whRepo.UpdateLastOffset(id, offset)
 		if err != nil {
 			return nil, errors.Wrap(err, "update last offset")
 		}
