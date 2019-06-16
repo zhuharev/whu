@@ -5,6 +5,9 @@ import (
 
 	"github.com/pkg/errors"
 	whPkg "github.com/zhuharev/whu/domain/webhook"
+
+	"github.com/bloom42/rz-go/v2"
+	"github.com/bloom42/rz-go/v2/log"
 )
 
 type Update struct {
@@ -49,10 +52,12 @@ func (uc *uc) Get(id string, offset int) ([]Update, error) {
 	}
 
 	if offset > count {
+		log.Debug("offset greater then count", rz.Int("offset", offset), rz.Int("count", count))
 		offset = count
 	}
 
 	if wh.LastOffset < offset {
+		log.Debug("wh.lastoffset least then passed offset", rz.Int("lastoffset", wh.LastOffset), rz.Int("offset", offset))
 		wh.LastOffset = offset
 		err = uc.whRepo.UpdateLastOffset(id, offset)
 		if err != nil {
@@ -60,13 +65,13 @@ func (uc *uc) Get(id string, offset int) ([]Update, error) {
 		}
 	}
 
-	updates, err := uc.repo.Get(id, wh.LastOffset)
+	updates, err := uc.repo.Get(id, offset)
 	if err != nil {
 		return nil, err
 	}
 
 	for i := range updates {
-		updates[i].ID = wh.LastOffset + i + 1
+		updates[i].ID = offset + i + 1
 	}
 	return updates, nil
 }
