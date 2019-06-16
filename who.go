@@ -17,6 +17,9 @@ import (
 
 func main() {
 	sdb, err := storm.Open(os.Getenv("DB_PATH"))
+	if err != nil {
+		panic(err)
+	}
 	defer sdb.Close()
 	repo, err := repo.New(sdb)
 	if err != nil {
@@ -29,7 +32,9 @@ func main() {
 	// metrics
 	e.Any("/metrics", echo.WrapHandler(promhttp.Handler()))
 	delivery.New(e, updUC, whRepo)
-	e.Start(":" + os.Getenv("PORT"))
+	if err := e.Start(":" + os.Getenv("PORT")); err != nil {
+		panic(err)
+	}
 }
 
 // HTTPMetrics is the middleware function that logs duration of responses.

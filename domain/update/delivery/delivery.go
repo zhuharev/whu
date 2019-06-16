@@ -46,7 +46,8 @@ func (s *srv) handleWH(ctx echo.Context) (err error) {
 	var data []byte
 	defer ctx.Request().Body.Close()
 	if ct := ctx.Request().Header.Get("Content-Type"); strings.HasPrefix(ct, "application/x-www-form-urlencoded") {
-		values, err := ctx.FormParams()
+		var values url.Values
+		values, err = ctx.FormParams()
 		if err != nil {
 			log.Error("error get form params", rz.Error("err", err))
 			return err
