@@ -1,3 +1,3 @@
 #!/bin/bash
 
-GOCACHE=/tmp /usr/local/go/bin/go build -o whu
+GOCACHE=/webmaster/.gocache GOPATH=/webmaster/go /usr/local/go/bin/go build -o whu
