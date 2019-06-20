@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/bloom42/rz-go/v2"
 	"github.com/bloom42/rz-go/v2/log"
 	"github.com/pkg/errors"
+	zhuerrors "github.com/zhuharev/errors"
 	"github.com/zhuharev/whu/domain/update"
 )
 
@@ -41,9 +43,14 @@ func (c *Client) doRequest(fn func([]byte) error) error {
 	}
 	defer resp.Body.Close()
 	var updates []update.Update
-	err = json.NewDecoder(resp.Body).Decode(&updates)
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "decode json")
+		return ReadResponseBody.New("updates response").String("body", string(data))
+	}
+	err = json.Unmarshal(data, &updates)
+	if err != nil {
+		return UnmarshalJSON.New("unmarshal json of body bytes").
+			String("body", string(data))
 	}
 	for _, upd := range updates {
 		err := fn(upd.Payload)
@@ -54,3 +61,10 @@ func (c *Client) doRequest(fn func([]byte) error) error {
 	}
 	return nil
 }
+
+type ErrorType = zhuerrors.ErrorType
+
+const (
+	ReadResponseBody ErrorType = ErrorType(iota)
+	UnmarshalJSON
+)
