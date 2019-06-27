@@ -52,6 +52,10 @@ func (uc *uc) Get(id string, initialOffset int) ([]Update, error) {
 		return nil, errors.Wrap(err, "get updates count")
 	}
 
+	if offset == 0 {
+		offset = wh.LastOffset
+	}
+
 	if offset > count {
 		log.Debug("offset greater then count", rz.Int("offset", offset), rz.Int("count", count))
 		offset = count
