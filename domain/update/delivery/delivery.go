@@ -9,6 +9,7 @@ import (
 
 	"github.com/bloom42/rz-go/v2"
 	"github.com/bloom42/rz-go/v2/log"
+	"github.com/pkg/errors"
 	"github.com/rs/xid"
 
 	"github.com/labstack/echo"
@@ -40,6 +41,22 @@ func dedupeValues(val url.Values) map[string]string {
 	return res
 }
 
+func handleSlackChallenge(ctx echo.Context, body []byte) error {
+	var req struct {
+		Challenge string
+	}
+	err := json.Unmarshal(body, &req)
+	if err != nil {
+		return errors.Wrap(err, "unmarshal json")
+	}
+	if req.Challenge != "" {
+		return ctx.JSON(200, map[string]string{
+			"challenge": req.Challenge,
+		})
+	}
+	return nil
+}
+
 func (s *srv) handleWH(ctx echo.Context) (err error) {
 	log.Debug("incoming webhook", rz.String("url", ctx.Request().URL.String()))
 	//TODO: check wh is exists
@@ -59,6 +76,16 @@ func (s *srv) handleWH(ctx echo.Context) (err error) {
 	if err != nil {
 		log.Error("error create body", rz.Error("err", err))
 		return err
+	}
+
+	// check is slack challenge request
+	// TODO: do not handle every request
+	if ct := ctx.Request().Header.Get("Content-Type"); strings.HasPrefix(ct, "application/json") {
+		err = handleSlackChallenge(ctx, data)
+		if err != nil {
+			log.Error("handle slack challenge", rz.Err(err))
+			return err
+		}
 	}
 
 	return s.repo.Save(ctx.Param("xid"), data)
