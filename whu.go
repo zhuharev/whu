@@ -5,17 +5,32 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bloom42/rz-go/v2"
+	"github.com/bloom42/rz-go/v2/log"
+
 	"github.com/asdine/storm"
 	"github.com/labstack/echo"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/zhuharev/talert"
 	"github.com/zhuharev/whu/domain/update"
 	"github.com/zhuharev/whu/domain/update/delivery"
 	"github.com/zhuharev/whu/domain/update/repo"
 	whStormDB "github.com/zhuharev/whu/domain/webhook/repo/storm"
 )
 
+const version = "0.0.7"
+
 func main() {
+	log.Info("start whu", rz.String("version", version))
+	if dsn := os.Getenv("TALERT_DSN"); dsn != "" {
+		token, chatID, err := talert.ParseDSN(dsn)
+		if err != nil {
+			panic(err)
+		}
+		talert.Init(token, chatID)
+	}
+	talert.Alert("whu started", talert.String("version", version))
 	sdb, err := storm.Open(os.Getenv("DB_PATH"))
 	if err != nil {
 		panic(err)
