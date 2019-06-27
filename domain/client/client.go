@@ -18,17 +18,31 @@ type Client struct {
 	offset     int
 	baseURL    string
 	httpClient *http.Client
+	interval   int
 }
 
-func New(baseURL string) *Client {
-	return &Client{
-		baseURL:    baseURL,
-		httpClient: &http.Client{Timeout: 15 * time.Second},
+type ClientOpt func(*Client)
+
+func FetchInterval(seconds int) ClientOpt {
+	return func(c *Client) {
+		c.interval = seconds
 	}
 }
 
+func New(baseURL string, opts ...ClientOpt) *Client {
+	c := &Client{
+		baseURL:    baseURL,
+		httpClient: &http.Client{Timeout: 15 * time.Second},
+		interval:   15,
+	}
+	for _, fn := range opts {
+		fn(c)
+	}
+	return c
+}
+
 func (c *Client) Run(fn func([]byte) error) {
-	for t := time.NewTicker(30 * time.Second); ; <-t.C {
+	for t := time.NewTicker(time.Duration(c.interval) * time.Second); ; <-t.C {
 		err := c.doRequest(fn)
 		if err != nil {
 			log.Error("err do", rz.Err(err))

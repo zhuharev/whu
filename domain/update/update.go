@@ -40,7 +40,8 @@ func (uc *uc) Save(id string, payload []byte) error {
 	return uc.repo.Save(id, payload)
 }
 
-func (uc *uc) Get(id string, offset int) ([]Update, error) {
+func (uc *uc) Get(id string, initialOffset int) ([]Update, error) {
+	offset := initialOffset
 	wh, err := uc.whRepo.Get(id)
 	if err != nil {
 		return nil, errors.Wrap(err, "get repo by id")
@@ -64,6 +65,13 @@ func (uc *uc) Get(id string, offset int) ([]Update, error) {
 			return nil, errors.Wrap(err, "update last offset")
 		}
 	}
+
+	log.Debug("stat",
+		rz.Int("offset", offset),
+		rz.Int("last_offset", wh.LastOffset),
+		rz.Int("count", count),
+		rz.Int("initial_offset", initialOffset),
+	)
 
 	updates, err := uc.repo.Get(id, offset)
 	if err != nil {
