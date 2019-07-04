@@ -43,6 +43,7 @@ func New(baseURL string, opts ...ClientOpt) *Client {
 
 func (c *Client) Run(fn func([]byte) error) {
 	for t := time.NewTicker(time.Duration(c.interval) * time.Second); ; <-t.C {
+		log.Debug("do request")
 		err := c.doRequest(fn)
 		if err != nil {
 			log.Error("err do", rz.Err(err))
@@ -67,6 +68,7 @@ func (c *Client) doRequest(fn func([]byte) error) error {
 			String("body", string(data))
 	}
 	for _, upd := range updates {
+		log.Debug("do callback")
 		err := fn(upd.Payload)
 		if err != nil {
 			return errors.Wrap(err, "callback")

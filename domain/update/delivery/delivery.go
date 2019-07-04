@@ -9,7 +9,6 @@ import (
 
 	"github.com/bloom42/rz-go/v2"
 	"github.com/bloom42/rz-go/v2/log"
-	"github.com/pkg/errors"
 	"github.com/rs/xid"
 
 	"github.com/labstack/echo"
@@ -47,12 +46,28 @@ func handleSlackChallenge(ctx echo.Context, body []byte) error {
 	}
 	err := json.Unmarshal(body, &req)
 	if err != nil {
-		return errors.Wrap(err, "unmarshal json")
+		return nil
 	}
 	if req.Challenge != "" {
 		return ctx.JSON(200, map[string]string{
 			"challenge": req.Challenge,
 		})
+	}
+	return nil
+}
+
+func handleVkChallenge(ctx echo.Context, body []byte) error {
+	var vkChallenge struct {
+		Type    string `json:"type"`
+		GroupID int    `json:"group_id"`
+	}
+	err := json.Unmarshal(body, &vkChallenge)
+	if err != nil {
+		// do not return error
+		return nil
+	}
+	if vkChallenge.Type == "confirmation" {
+		return ctx.String(200, "57725478")
 	}
 	return nil
 }
@@ -84,6 +99,13 @@ func (s *srv) handleWH(ctx echo.Context) (err error) {
 		err = handleSlackChallenge(ctx, data)
 		if err != nil {
 			log.Error("handle slack challenge", rz.Err(err))
+			return err
+		}
+		// check is vk confirmation request
+		// TODO: do not  handle every requst
+		err = handleVkChallenge(ctx, data)
+		if err != nil {
+			log.Error("handle vk challenge", rz.Err(err))
 			return err
 		}
 	}
