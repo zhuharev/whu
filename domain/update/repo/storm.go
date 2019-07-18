@@ -2,6 +2,7 @@ package repo
 
 import (
 	"github.com/asdine/storm"
+	"github.com/asdine/storm/q"
 	"github.com/zhuharev/whu/domain/update"
 )
 
@@ -26,7 +27,7 @@ func (db *DB) Save(wh string, payload []byte) error {
 }
 
 func (db *DB) Get(wh string, offset int) (updates []update.Update, err error) {
-	err = db.db.Find("WH", wh, &updates, storm.Skip(offset))
+	err = db.db.Find("WH", wh, &updates, storm.Skip(offset), storm.Limit(10))
 	if err == storm.ErrNotFound {
 		return nil, nil
 	}
@@ -34,13 +35,5 @@ func (db *DB) Get(wh string, offset int) (updates []update.Update, err error) {
 }
 
 func (db *DB) GetUpdatesCount(id string) (count int, err error) {
-	var updates []update.Update
-	err = db.db.Find("WH", id, &updates)
-	if err != nil {
-		if err == storm.ErrNotFound {
-			return 0, nil
-		}
-		return 0, err
-	}
-	return len(updates), nil
+	return db.db.Select(q.Eq("WH", id)).Count(&update.Update{})
 }
