@@ -12,7 +12,7 @@ import (
 
 type Update struct {
 	ID      int             `storm:"id,increment" json:"id"`
-	WH      string          `storm:"index" json:"-"`
+	WH      string          `storm:"index"`
 	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
