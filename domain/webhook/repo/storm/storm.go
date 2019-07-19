@@ -1,6 +1,8 @@
 package storm
 
 import (
+	"net/url"
+
 	"github.com/asdine/storm"
 	"github.com/zhuharev/whu/domain/webhook"
 )
@@ -31,4 +33,17 @@ func (r *repo) Get(id string) (*webhook.Webhook, error) {
 	wh := webhook.Webhook{}
 	err := r.db.One("ID", id, &wh)
 	return &wh, err
+}
+
+func (r *repo) SetProxy(id string, u string) error {
+	_, err := url.Parse(u)
+	if err != nil {
+		return err
+	}
+	wh, err := r.Get(id)
+	if err != nil {
+		return err
+	}
+	wh.ProxyURL = u
+	return r.db.UpdateField(wh, "ProxyURL", u)
 }

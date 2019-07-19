@@ -19,7 +19,7 @@ import (
 	whStormDB "github.com/zhuharev/whu/domain/webhook/repo/storm"
 )
 
-const version = "0.0.13"
+const version = "0.0.14"
 
 func main() {
 	log.Info("start whu", rz.String("version", version))

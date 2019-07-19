@@ -1,11 +1,14 @@
 package delivery
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bloom42/rz-go/v2"
 	"github.com/bloom42/rz-go/v2/log"
@@ -17,15 +20,18 @@ import (
 )
 
 func New(e *echo.Echo, updUC update.UseCase, whRepo webhook.Repo) {
-	s := &srv{updUC, whRepo}
+	s := &srv{updUC, whRepo, &http.Client{Timeout: 10 * time.Second}}
 	e.GET("/webhooks/:xid/updates", s.handleUpdates)
 	e.POST("/webhooks/:xid", s.handleWH)
 	e.POST("/create", s.handleWHCreate)
+	e.POST("/webhooks/:xid/set-proxy", s.handleSetProxy)
 }
 
 type srv struct {
 	repo   update.UseCase
 	whRepo webhook.Repo
+
+	cli *http.Client
 }
 
 func dedupeValues(val url.Values) map[string]string {
@@ -72,8 +78,15 @@ func handleVkChallenge(ctx echo.Context, body []byte) error {
 	return nil
 }
 
+func (s *srv) handleSetProxy(ctx echo.Context) error {
+	xid := ctx.Param("xid")
+	u := ctx.QueryParam("url")
+	return s.whRepo.SetProxy(xid, u)
+}
+
 func (s *srv) handleWH(ctx echo.Context) (err error) {
 	log.Debug("incoming webhook", rz.String("url", ctx.Request().URL.String()))
+
 	//TODO: check wh is exists
 	var data []byte
 	defer ctx.Request().Body.Close()
@@ -110,11 +123,35 @@ func (s *srv) handleWH(ctx echo.Context) (err error) {
 		}
 	}
 
-	return s.repo.Save(ctx.Param("xid"), data)
+	err = s.repo.Save(ctx.Param("xid"), data)
+	if err != nil {
+		return err
+	}
+
+	wh, err := s.whRepo.Get(ctx.Param("xid"))
+	if err != nil {
+		return err
+	}
+	if wh.ProxyURL != "" {
+		resp, err := s.cli.Post(wh.ProxyURL, "application/json", bytes.NewReader(data))
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+	}
+	return nil
 }
 
 func (s *srv) handleUpdates(ctx echo.Context) error {
 	xid := ctx.Param("xid")
+	wh, err := s.whRepo.Get(ctx.Param("xid"))
+	if err != nil {
+		return err
+	}
+	if wh.ProxyURL != "" {
+		return ctx.JSON(200, []update.Update{})
+	}
+
 	offset, _ := strconv.ParseInt(ctx.QueryParam("offset"), 10, 64)
 	updates, err := s.repo.Get(xid, int(offset))
 	if err != nil {
